@@ -370,6 +370,8 @@ class SnowflakeDialect(default.DefaultDialect):
         opts.update(url.query)
         self._cache_column_metadata = opts.get('cache_column_metadata',
                                                "false").lower() == 'true'
+        self._quote_identifiers = opts.get('quote_identifiers',
+                                           "true").lower() == "true"
         return ([], opts)
 
     def has_table(self, connection, table_name, schema=None):
@@ -407,7 +409,7 @@ class SnowflakeDialect(default.DefaultDialect):
                 self.identifier_preparer._requires_quotes(name.lower()):
             return name.lower()
         elif name.lower() == name:
-            return quoted_name(name, quote=True)
+            return quoted_name(name, quote=self._quote_identifiers)
         else:
             return name
 
