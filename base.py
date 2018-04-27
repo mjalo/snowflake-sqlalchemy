@@ -197,7 +197,7 @@ class SnowflakeDDLCompiler(compiler.DDLCompiler):
                 self.preparer._requires_quotes(name.lower()):
             # no quote as case insensitive
             return name
-        return self.preparer.quote(name)
+        return self.preparer.quote(name) if self._quote_identifiers else name
 
     def get_column_specification(self, column, **kwargs):
         """
@@ -409,7 +409,7 @@ class SnowflakeDialect(default.DefaultDialect):
                 self.identifier_preparer._requires_quotes(name.lower()):
             return name.lower()
         elif name.lower() == name:
-            return quoted_name(name, quote=self._quote_identifiers)
+            return quoted_name(name, quote=True) if self._quote_identifiers else name
         else:
             return name
 
