@@ -197,7 +197,7 @@ class SnowflakeDDLCompiler(compiler.DDLCompiler):
                 self.preparer._requires_quotes(name.lower()):
             # no quote as case insensitive
             return name
-        return self.preparer.quote(name) if self._quote_identifiers else name
+        return self.preparer.quote(name)
 
     def get_column_specification(self, column, **kwargs):
         """
@@ -370,8 +370,8 @@ class SnowflakeDialect(default.DefaultDialect):
         opts.update(url.query)
         self._cache_column_metadata = opts.get('cache_column_metadata',
                                                "false").lower() == 'true'
-        self._quote_identifiers = opts.get('quote_identifiers',
-                                           "true").lower() == "true"
+        self._force_case_insensitive = opts.get('_force_case_insensitive',
+                                           "false").lower() == "true"
         return ([], opts)
 
     def has_table(self, connection, table_name, schema=None):
@@ -408,17 +408,21 @@ class SnowflakeDialect(default.DefaultDialect):
         if name.upper() == name and not \
                 self.identifier_preparer._requires_quotes(name.lower()):
             return name.lower()
+        elif self._force_case_insensitive:
+            return name.lower()
         elif name.lower() == name:
-            return quoted_name(name, quote=True) if self._quote_identifiers else name
+            return quoted_name(name, quote=True)
         else:
             return name
 
     def denormalize_name(self, name):
         if name is None:
             return None
+        elif self._force_case_insensitive:
+            return name.lower()
         elif name.lower() == name and not \
                 self.identifier_preparer._requires_quotes(name.lower()):
-            name = name.upper() if self._quote_identifiers else name
+            name = name.upper()
         return name
 
     def _denormalize_quote_join(self, *idents):
@@ -605,7 +609,7 @@ SELECT /* sqlalchemy:_get_columns_for_tables */
             sfkey = ('snowflake_cache', schema, table_name)
             if info_cache.get(sfkey) is None:
                 info_cache[sfkey] = {}
-
+            colname = colname.lower() if self._force_case_insensitive else colname
             info_cache[sfkey][colname] = obj
 
     @reflection.cache
