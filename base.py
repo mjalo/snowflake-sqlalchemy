@@ -418,7 +418,7 @@ class SnowflakeDialect(default.DefaultDialect):
             return None
         elif name.lower() == name and not \
                 self.identifier_preparer._requires_quotes(name.lower()):
-            name = name.upper()
+            name = name.upper() if self._quote_identifiers else name
         return name
 
     def _denormalize_quote_join(self, *idents):
